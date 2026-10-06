@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>订单表格生成器</title>
+<meta name="theme-color" content="#1f6b4f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="订单表">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f6b4f'/%3E%3Cpath d='M9 8h14v3H9zm0 6h14v2H9zm0 5h9v2H9z' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;background:#f1f4f1;color:#22302a;line-height:1.5;font-size:15px}
+button{font-family:inherit}
+/* ===== 顶栏 ===== */
+.topbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #dce3dd}
+.topbar-inner{max-width:1120px;margin:0 auto;padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px;color:#15513c}
+.brand svg{display:block}
+.brand-logo{height:34px;width:auto;border-radius:4px;display:block}
+.brand-name{display:flex;flex-direction:column;line-height:1.15}
+.brand-sub{font-size:11.5px;font-weight:600;color:#5a6f64}
+.top-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.datebox{display:flex;align-items:center;gap:6px;font-size:14px;color:#5e6e64}
+.datebox input{border:1px solid #dce3dd;border-radius:8px;padding:6px 8px;font-size:14px;font-family:inherit;color:#22302a;background:#fff}
+/* ===== 主区 ===== */
+main{max-width:1120px;margin:0 auto;padding:16px;display:grid;gap:14px}
+.card{background:#fff;border:1px solid #dce3dd;border-radius:12px;padding:16px 16px 18px}
+.card h2{font-size:15px;display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.stepnum{width:22px;height:22px;border-radius:50%;background:#1f6b4f;color:#fff;font-size:12px;display:inline-flex;align-items:center;justify-content:center;flex:none;font-weight:600}
+.card-sub{color:#5e6e64;font-size:13px;font-weight:400}
+.total{margin-left:auto;font-size:14px;color:#15513c;font-weight:600;white-space:nowrap}
+textarea{width:100%;min-height:150px;border:1px solid #dce3dd;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;line-height:1.6;resize:vertical;color:#22302a;background:#fbfcfa}
+textarea:focus{outline:2px solid #1f6b4f;outline-offset:-1px;background:#fff}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.btn{border:1px solid transparent;border-radius:9px;padding:8px 14px;font-size:14px;cursor:pointer;background:#eef2ee;color:#22302a;transition:background .12s,border-color .12s}
+.btn:hover{background:#e4ebe5}
+.btn.primary{background:#1f6b4f;color:#fff}
+.btn.primary:hover{background:#15513c}
+.btn.accent{background:#b97b1f;color:#fff}
+.btn.accent:hover{background:#9d6716}
+.btn.ghost{background:#fff;border-color:#dce3dd}
+.btn.ghost:hover{background:#f4f7f4;border-color:#c5d0c8}
+.btn.danger{background:#fff;border-color:#e3c4c1;color:#b3423a}
+.btn.danger:hover{background:#fdf2f1}
+.btn.tiny{padding:2px 7px;font-size:13px;border-radius:7px;background:#eef2ee;color:#22302a;border:1px solid transparent;cursor:pointer}
+.btn.tiny:hover{background:#dfe7e0}
+.btn.tiny.danger{background:#fff;border-color:#e3c4c1;color:#b3423a}
+.btn.tiny.danger:hover{background:#fdf2f1}
+.hint{color:#5e6e64;font-size:12.5px;margin-top:10px;line-height:1.7}
+.hint code{background:#eef2ee;border-radius:4px;padding:1px 5px;font-family:inherit;font-size:12px}
+/* ===== 表格 ===== */
+.table-wrap{overflow-x:auto;border:1px solid #dce3dd;border-radius:10px}
+.main-table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:700px}
+.main-table th{background:#1f6b4f;color:#fff;font-size:12.5px;font-weight:600;padding:8px 4px;text-align:center;white-space:nowrap;border:1px solid #1a5c44;font-family:"Microsoft YaHei","微软雅黑","PingFang SC",sans-serif}
+.main-table td{border:1px solid #e3e9e4;vertical-align:middle}
+.cell{border:1px solid transparent;background:transparent;width:100%;padding:6px 8px;font-size:14px;font-family:inherit;color:#22302a;border-radius:6px}
+.cell:hover{border-color:#cfe0d6;background:#fff}
+.cell:focus{outline:2px solid #1f6b4f;outline-offset:-1px;background:#fff}
+.cell.num{text-align:center}
+td.op{text-align:center;padding:2px}
+td.chk{text-align:center;padding:4px}
+td.chk input{width:18px;height:18px;accent-color:#1f6b4f;cursor:pointer}
+tr.c-head td{background:#eef4ef;padding:4px 6px}
+.c-head-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.c-idx{width:20px;height:20px;border-radius:50%;background:#fff;border:1px solid #c5d0c8;color:#15513c;font-size:12px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.c-name{flex:0 1 170px;border:1px solid transparent;background:transparent;font-size:14.5px;font-weight:600;padding:5px 8px;border-radius:6px;color:#22302a;font-family:inherit}
+.c-name:hover{border-color:#cfe0d6;background:#fff}
+.c-name:focus{outline:2px solid #1f6b4f;outline-offset:-1px;background:#fff}
+.c-note{flex:1 1 220px;border:1px dashed #d0d9d2;background:#fafcfa;font-size:12.5px;padding:4px 8px;border-radius:6px;color:#5e6e64;font-family:inherit;min-width:140px}
+.c-note:hover{border-color:#cfe0d6;background:#fff}
+.c-note:focus{outline:2px solid #1f6b4f;outline-offset:-1px;background:#fff}
+.c-actions{display:inline-flex;gap:4px}
+.empty{color:#8a9a90;font-size:14px;text-align:center;padding:34px 10px;line-height:1.8}
+.unmatched-wrap{margin-top:14px;border:1px solid #e8d9b8;border-radius:10px;background:#fdf9ef;overflow:hidden}
+.unmatched-wrap h3{font-size:13.5px;color:#8a5a12;padding:8px 12px;background:#faf0d8;border-bottom:1px solid #efdfb8}
+.unmatched-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.unmatched-table th{font-size:12.5px;font-weight:600;color:#8a5a12;padding:6px;text-align:left;border-bottom:1px solid #efdfb8;background:#fdf6e6}
+.unmatched-table td{border-bottom:1px solid #f2e7cc;padding:4px 6px;vertical-align:middle}
+/* ===== 历史 ===== */
+.history-list{display:grid;gap:8px;margin-top:4px}
+.hist-item{display:flex;align-items:center;gap:10px;border:1px solid #e3e9e4;border-radius:10px;padding:8px 10px;flex-wrap:wrap}
+.hist-date{font-weight:600;min-width:110px}
+.hist-meta{color:#5e6e64;font-size:13px;flex:1}
+.hist-actions{display:inline-flex;gap:6px}
+/* ===== 设置 ===== */
+.settings{display:grid;gap:14px}
+.settings label{display:flex;align-items:center;gap:8px;font-size:14px}
+.settings input[type=text]{border:1px solid #dce3dd;border-radius:8px;padding:6px 10px;font-size:14px;font-family:inherit;flex:0 1 260px}
+.settings .chk input{width:16px;height:16px;accent-color:#1f6b4f}
+.tpl-editor{display:grid;gap:10px;margin-top:6px}
+.tpl-box{border:1px solid #e3e9e4;border-radius:10px;padding:10px 12px}
+.tpl-box-head{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.tpl-box-head .c-name{flex:0 1 160px}
+.tpl-item{display:flex;gap:6px;align-items:center;margin:4px 0}
+.tpl-item input{flex:1;border:1px solid #dce3dd;border-radius:7px;padding:5px 8px;font-size:13.5px;font-family:inherit}
+.tpl-item .unit-in{flex:0 1 90px}
+.tpl-item .del-in{flex:0 0 auto}
+.tpl-note{width:100%;border:1px dashed #d0d9d2;border-radius:7px;padding:5px 8px;font-size:13px;font-family:inherit;margin-top:6px;background:#fafcfa}
+.tpl-note:focus{outline:2px solid #1f6b4f;outline-offset:-1px}
+.foot{color:#8a9a90;font-size:12px;text-align:center;padding:4px 10px 26px;line-height:1.7}
+/* ===== 提示 ===== */
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);background:#22302a;color:#fff;padding:9px 18px;border-radius:20px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:99;max-width:86vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ===== 打印（完全按用户模板：A4竖版 · 微软雅黑11号 · 全居中 · 上下1.91cm 左右0.64cm） ===== */
+#printArea{display:none}
+@page{size:A4 portrait;margin:1.91cm 0.64cm}
+@media print{
+  body{background:#fff}
+  .topbar,main,.foot,.toast{display:none!important}
+  #printArea{display:block!important;font-family:"Microsoft YaHei","微软雅黑","PingFang SC","Heiti SC",sans-serif;color:#000;font-size:11pt}
+  .print-brand{display:flex;align-items:center;justify-content:center;gap:10pt;padding:1pt 0 3pt}
+  .print-brand img{height:30pt;width:auto}
+  .print-brand span{font-size:11pt;font-weight:700;letter-spacing:1pt}
+  .print-title{text-align:center;font-weight:700;font-size:11pt;padding:2pt 0 3pt}
+  .print-date{display:flex;border:1px solid #000;margin:0 0 8pt}
+  .print-date span{border-right:1px solid #000;padding:4pt 6pt;text-align:center;width:6.5%;font-size:11pt;font-weight:700}
+  .print-date b{flex:1;padding:4pt 6pt;text-align:center;font-weight:400;font-size:11pt}
+  #printArea table{width:100%;border-collapse:collapse;table-layout:fixed}
+  #printArea th,#printArea td{border:1px solid #000;padding:1pt 2pt;font-size:11pt;text-align:center;vertical-align:middle;white-space:nowrap;height:15.75pt;line-height:1.05}
+  #printArea th{background:#f0f0f0;font-weight:700}
+  tr{break-inside:avoid;height:15.75pt}
+  .pc-cname{font-weight:700}
+  .pc-unit{white-space:nowrap;letter-spacing:-0.2pt}
+  #printArea .pc-note td{color:#000;height:auto;line-height:1.35;padding:3pt 4pt;white-space:normal}
+  .pc-unmatched td{background:#faf0d8}
+  .print-foot{margin-top:10pt;font-size:11pt;display:flex;justify-content:space-between;color:#000;gap:12pt;flex-wrap:wrap}
+  .r,.c{text-align:center}
+}
+@media (max-width:640px){
+  .topbar-inner{padding:10px 12px}
+  main{padding:12px;gap:12px}
+  .card{padding:14px}
+  .c-name{flex:1 1 auto}
+  body{font-size:16px}
+  textarea,.cell,input[type=text],.datebox input,.c-note{font-size:16px}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <img src="assets/logo.png" alt="BX STUDIO" class="brand-logo">
+      <span class="brand-name">BX STUDIO<span class="brand-sub">订单表格生成器</span></span>
+    </div>
+    <div class="top-actions">
+      <label class="datebox">日期 <input type="date" id="dateInput"></label>
+      <button type="button" class="btn primary" id="btnSave">保存</button>
+      <button type="button" class="btn primary" id="btnPrint">打印</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ===== 视图：粘贴 ===== -->
+  <section class="card">
+    <h2><span class="stepnum">1</span>粘贴订单文本<span class="card-sub">老板发在群里的原文</span></h2>
+    <textarea id="rawInput" spellcheck="false" placeholder="把老板发在群里的订单原文粘贴到这里，例如：
+
+*12kg pork belly
+*6kg chicken bones
+*6kg beef slices for soups.
+2包 金钱鍵。
+1包 牛仔骨
+1包 牛肋条
+牛腩-40kg
+猪肉丝-10kg（5mm)
+带皮猪肩肉片-20kg
+带骨头五花肉6片，梅头肉35kg
+10片 五花肉
+20kg 梅头
+10kg 豬肉碎（好的）
+20kg 后腿肉 （去油）尽量干净
+走地鸡：1箱
+美排：1箱"></textarea>
+    <div class="btn-row">
+      <button type="button" class="btn accent" id="btnParse">识别并生成表格</button>
+      <button type="button" class="btn ghost" id="btnSample">填入示例</button>
+    </div>
+    <p class="hint">识别规则：每个商品一行，写成「名称+数量」，如 <code>牛腩-40kg</code>、<code>2包 金钱腱</code>；一行多个商品可用逗号或顿号隔开。不同客户之间用<b>空行</b>隔开：一个空行段落 = 一个客户，程序自动按「客户一、客户二……」命名（可在表头改名）。带括号的内容（如 <code>猪肉丝（5mm）</code>）会整句放进备注。英文会自动转大写。</p>
+  </section>
+
+  <!-- ===== 视图：表格 ===== -->
+  <section class="card">
+    <h2><span class="stepnum">2</span>订单表格<span class="card-sub">可直接修改</span><span class="total" id="grandTotal"></span></h2>
+    <div id="tableWrap" class="table-wrap"></div>
+    <div id="unmatchedWrap"></div>
+    <div class="btn-row">
+      <button type="button" class="btn ghost" data-act="add-customer">＋ 添加客户</button>
+      <button type="button" class="btn ghost" data-act="clear-qty">清空数量</button>
+      <button type="button" class="btn ghost" id="btnCopy">复制文本</button>
+      <button type="button" class="btn ghost" id="btnExport">导出 CSV（Excel）</button>
+    </div>
+  </section>
+
+  <!-- ===== 视图：历史 ===== -->
+  <section class="card">
+    <h2><span class="stepnum">3</span>历史记录<span class="card-sub">点右上角「保存」把当天订单存档</span></h2>
+    <div id="historyList" class="history-list"></div>
+  </section>
+
+  <!-- ===== 视图：设置 ===== -->
+  <section class="card">
+    <h2><span class="stepnum">4</span>设置<span class="card-sub">客户模板 + 打印</span></h2>
+    <div class="settings">
+      <label>店名 / 表头 <input type="text" id="setShop" placeholder="例如：老李菜铺"></label>
+      <label class="chk"><input type="checkbox" id="setFulfill"> 显示「实给量 / 完成 / 总完成」列</label>
+      <div>
+        <p class="hint" style="margin-top:0">这里是客户 / 商品管理：识别后生成的客户可以在这里改名、增删商品；也可以手动添加客户、再在表格里填商品。</p>
+        <div class="btn-row" style="margin-top:8px">
+          <button type="button" class="btn ghost" id="btnAddTplCustomer">＋ 添加客户</button>
+        </div>
+        <div id="tplEditor" class="tpl-editor" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">数据只保存在本机浏览器里，不会上传；识别结果都可以在表格里直接改。iPhone 用法：用 Safari 打开本页 → 点「分享」→「添加到主屏幕」，桌面就有 App 图标，点开即用。</footer>
+</main>
+
+<div id="printArea" aria-hidden="true"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+/* ===== PURE LOGIC START ===== */
+function normNum(s){return String(s).replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0);}).replace(/．/g,'.').replace(/[Ａ-Ｚａ-ｚ]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0);});}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function deepCopy(o){return JSON.parse(JSON.stringify(o));}
+
+var UNIT_CLASS='斤两份包盒袋箱件瓶条只双副把张桶罐板捆篮打扎串杯碗盘个千克公斤克升毫升支根套块元角板袋片';
+
+function upEn(s){return String(s||'').replace(/[a-z]/g,function(c){return c.toUpperCase();});}
+function unitNorm(u){
+  var map={'KG':'K','包':'B','片':'PCS','箱':'CTN'};
+  u=upEn(u);
+  return map[u]||u;
+}
+function findQty(rest){
+  var re=new RegExp('(\\d+(?:\\.\\d+)?)\\s*(['+UNIT_CLASS+']|[gGkK][gG]|[mM][lL]|[lL])?','g');
+  var m,last=null;
+  while((m=re.exec(rest))!==null){if(m[0])last=m;}
+  return last;
+}
+function parseItemLine(line){
+  var s=normNum(line).trim();
+  if(!s)return null;
+  s=s.replace(/^(\d+[.、．)）]|[-·•*])\s*/,'');
+  var notes=[]; /* 括号备注：{r:括号内, e:括号后残留} */
+  var s2=s.replace(/[（(]([^（）()]*)[）)](\s*[^（）()]*)?/g,function(_,p,rest){
+    notes.push({r:(p||'').trim(),e:(rest||'').trim()});
+    return ' ';
+  }).replace(/[ \t]+/g,' ').trim();
+  var q=findQty(s2),name='',qty='',unit='';
+  if(q){
+    qty=q[1];unit=q[2]||'';
+    if(q.index===0){
+      name=s2.slice(q[0].length).replace(/^[\s,，、:：-]+/,'').trim();
+    }else{
+      name=s2.slice(0,q.index).replace(/[\s,，、:：-]+$/,'').trim();
+    }
+  }else{
+    name=s2;
+  }
+  name=name.replace(/[.。!！]+$/,'').trim();
+  if(!name)return null;
+  var remark='';
+  notes.forEach(function(np){
+    if(!np.r)return;
+    var base=name;
+    if(np.e)base=base.replace(new RegExp('\\s*'+np.e.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$'),'');
+    var frag=base+'（'+np.r+'）'+(np.e?' '+np.e:'');
+    if(np.e)name=base;
+    remark=remark?remark+'，'+frag:frag;
+  });
+  return {name:upEn(name),qty:qty,unit:unitNorm(unit),remark:remark?upEn(remark):'',raw:line.trim()};
+}
+function splitSegments(rest){
+  if(!rest)return [];
+  return rest.split(/[、，,;；]/).map(function(s){return s.trim();}).filter(Boolean);
+}
+function parseOrdersSimple(text){
+  /* 空行分段 = 一个客户；段内每行解析商品；括号内容整句进备注；客户按 客户一、客户二… 命名 */
+  var CN=['一','二','三','四','五','六','七','八','九','十'];
+  var blocks=String(text||'').split(/\n[ \t]*\n+/).map(function(b){return b.replace(/^\s+|\s+$/g,'');}).filter(Boolean);
+  var customers=blocks.map(function(block,bi){
+    var note='',items=[];
+    block.split(/\r?\n/).forEach(function(line){
+      splitSegments(line).forEach(function(seg){
+        var p=parseItemLine(seg);
+        if(!p)return;
+        if(p.remark)note=note?note+'，'+p.remark:p.remark;
+        items.push({name:p.name,unit:p.unit,qty:p.qty,given:'',done:false,totalDone:false});
+      });
+    });
+    return {name:CN[bi]?'客户'+CN[bi]:'客户'+(bi+1),note:note,items:items};
+  });
+  return {customers:customers,unmatched:[]};
+}
+function countFilled(customers){
+  var n=0;
+  customers.forEach(function(c){c.items.forEach(function(it){if(it.qty!==''&&it.qty!=null)n++;});});
+  return n;
+}
+function buildCSV(state,settings){
+  var rows=[];
+  var showF=settings.showFulfill!==false;
+  rows.push([settings.shopName||'订单表',state.date]);
+  var head=['客户','产品','重量/数量','单位'];
+  if(showF)head=head.concat(['实给量','完成','总完成']);
+  head.push('备注');
+  rows.push(head);
+  state.customers.forEach(function(c){
+    c.items.forEach(function(it){
+      var row=[c.name,it.name,it.qty,it.unit];
+      if(showF)row=row.concat([it.given,it.done?'✓':'',it.totalDone?'✓':'']);
+      row.push(c.note||'');
+      rows.push(row);
+    });
+    if(!c.items.length)rows.push([c.name,'','','','','','','']);
+  });
+  if(state.unmatched&&state.unmatched.length){
+    rows.push(['未匹配','','','','','','','']);
+    state.unmatched.forEach(function(u){rows.push(['',u.name,u.qty,u.unit,'','','','']);});
+  }
+  return rows.map(function(r){return r.map(function(cell){return '"'+String(cell==null?'':cell).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
+}
+function buildPrintHTML(state,settings){
+  var showF=settings.showFulfill!==false;
+  var heads=showF?['客户','产品','重量/数量','单位','实给量','完成','总完成']:['客户','产品','重量/数量','单位'];
+  var widths=showF?['6.38%','58.51%','8.51%','4.26%','9.57%','6.38%','6.38%']:['8.22%','75.34%','10.96%','5.48%'];
+  var html='';
+  html+='<div class="print-brand"><img src="assets/logo.png" alt="BX STUDIO" class="print-logo"><span>BX STUDIO</span></div>';
+  html+='<div class="print-title">'+esc(settings.shopName||'订单表')+'</div>';
+  html+='<div class="print-date"><span>日期</span><b>'+esc(state.date)+'</b></div>';
+  html+='<table><colgroup>';
+  widths.forEach(function(w){html+='<col style="width:'+w+'">';});
+  html+='</colgroup><thead><tr>'+heads.map(function(h){return '<th>'+h+'</th>';}).join('')+'</tr></thead><tbody>';
+  state.customers.forEach(function(c,ci){
+    var rows=c.items.length+1,first=true; /* 商品行 + 备注行 */
+    var allDone=c.items.every(function(it){return it.totalDone;});
+    c.items.forEach(function(it){
+      html+='<tr>';
+      if(first)html+='<td class="pc-cname" rowspan="'+rows+'">'+esc(c.name||('客户'+(ci+1)))+'</td>';
+      html+='<td>'+esc(it.name||'')+'</td><td>'+esc(it.qty)+'</td><td class="pc-unit">'+esc(it.unit)+'</td>';
+      if(showF){
+        html+='<td>'+esc(it.given)+'</td><td>'+(it.done?'✓':'')+'</td>';
+        if(first)html+='<td class="pc-total" rowspan="'+rows+'">'+(allDone?'✓':'')+'</td>';
+      }
+      html+='</tr>';
+      first=false;
+    });
+    html+='<tr class="pc-note"><td colspan="'+(heads.length-(showF?2:1))+'">备注'+(c.note?'：'+esc(c.note):'')+'</td></tr>';
+  });
+  if(state.unmatched&&state.unmatched.length){
+    html+='<tr class="pc-unmatched"><td colspan="'+heads.length+'">未匹配 / 其他</td></tr>';
+    state.unmatched.forEach(function(u){
+      html+='<tr class="pc-unmatched"><td></td><td>'+esc(u.name)+'</td><td>'+esc(u.qty)+'</td><td>'+esc(u.unit)+'</td>';
+      if(showF)html+='<td></td><td></td><td></td>';
+      html+='</tr>';
+    });
+  }
+  html+='</tbody></table>';
+  html+='<div class="print-foot"><span>共 '+state.customers.length+' 单</span>'
+    +(state.unmatched&&state.unmatched.length?('<span>未匹配 '+state.unmatched.length+' 项</span>'):'')+'</div>';
+  return html;
+}
+/* ===== PURE LOGIC END ===== */
+</script>
+<script>
+/* ===== APP LOGIC A ===== */
+var state={date:todayStr(),customers:[],unmatched:[]};
+var settings={shopName:'',showFulfill:true};
+var pendingFocus=null;
+var KEY_SET='orders_app_settings_v2',KEY_DRAFT='orders_app_draft_v2',KEY_HIST='orders_app_history_v2';
+var toastTimer=null;
+
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.classList.remove('show');},1900);
+}
+function loadSettings(){try{var s=JSON.parse(localStorage.getItem(KEY_SET));if(s)for(var k in s)settings[k]=s[k];}catch(e){}}
+function saveSettings(){try{localStorage.setItem(KEY_SET,JSON.stringify(settings));}catch(e){}}
+function saveDraft(){try{localStorage.setItem(KEY_DRAFT,JSON.stringify({date:state.date,customers:state.customers,unmatched:state.unmatched}));}catch(e){}}
+function loadDraft(){
+  try{
+    var d=JSON.parse(localStorage.getItem(KEY_DRAFT));
+    if(d&&d.date&&Array.isArray(d.customers)){
+      state.date=d.date;
+      state.customers=d.customers;
+      state.unmatched=Array.isArray(d.unmatched)?d.unmatched:[];
+    }
+  }catch(e){}
+}
+function loadHistory(){try{var h=JSON.parse(localStorage.getItem(KEY_HIST));return h&&typeof h==='object'?h:{};}catch(e){return {};}}
+function saveHistoryEntry(){
+  var h=loadHistory();
+  h[state.date]={customers:deepCopy(state.customers),unmatched:deepCopy(state.unmatched),savedAt:Date.now()};
+  try{localStorage.setItem(KEY_HIST,JSON.stringify(h));}catch(e){}
+}
+
+function colSpecs(){
+  if(settings.showFulfill!==false)return{cols:7,widths:['30%','14%','10%','14%','10%','10%','12%'],heads:['产品','重量/数量','单位','实给量','完成','总完成','操作']};
+  return{cols:4,widths:['52%','18%','16%','14%'],heads:['产品','重量/数量','单位','操作']};
+}
+function updateMeta(){
+  var g=document.getElementById('grandTotal');
+  var t='共 '+state.customers.length+' 单 · 已填 '+countFilled(state.customers)+' 项';
+  if(state.unmatched&&state.unmatched.length)t+=' · 未匹配 '+state.unmatched.length+' 项';
+  g.textContent=t;
+  saveDraft();
+}
+function renderMain(){
+  var wrap=document.getElementById('tableWrap');
+  var spec=colSpecs();
+  if(!state.customers.length){
+    wrap.innerHTML='<div class="empty">还没有客户。点「＋ 添加客户」，或在设置里「恢复默认模板」。</div>';
+    return;
+  }
+  var html='<table class="main-table"><colgroup>';
+  spec.widths.forEach(function(w){html+='<col style="width:'+w+'">';});
+  html+='</colgroup><thead><tr>';
+  spec.heads.forEach(function(h){html+='<th>'+h+'</th>';});
+  html+='</tr></thead><tbody>';
+  state.customers.forEach(function(c,ci){
+    html+='<tr class="c-head" data-ci="'+ci+'"><td colspan="'+spec.cols+'"><div class="c-head-bar">'
+      +'<span class="c-idx">'+(ci+1)+'</span>'
+      +'<input class="c-name" data-field="cname" data-ci="'+ci+'" value="'+esc(c.name)+'" placeholder="客户名">'
+      +'<input class="c-note" data-field="cnote" data-ci="'+ci+'" value="'+esc(c.note)+'" placeholder="备注（可选）">'
+      +'<span class="c-actions">'
+      +'<button type="button" class="btn tiny" data-act="c-up" data-ci="'+ci+'" title="上移">↑</button>'
+      +'<button type="button" class="btn tiny" data-act="c-down" data-ci="'+ci+'" title="下移">↓</button>'
+      +'<button type="button" class="btn tiny ghost" data-act="i-add" data-ci="'+ci+'" title="加一个商品">＋ 商品</button>'
+      +'<button type="button" class="btn tiny danger" data-act="c-del" data-ci="'+ci+'" title="删除客户">×</button>'
+      +'</span></div></td></tr>';
+    c.items.forEach(function(it,ii){
+      html+='<tr data-ci="'+ci+'" data-ii="'+ii+'">'
+        +'<td><input class="cell" data-field="name" data-ci="'+ci+'" data-ii="'+ii+'" value="'+esc(it.name)+'" placeholder="产品"></td>'
+        +'<td><input class="cell num" data-field="qty" data-ci="'+ci+'" data-ii="'+ii+'" value="'+esc(it.qty)+'" inputmode="decimal" placeholder="0"></td>'
+        +'<td><input class="cell" data-field="unit" data-ci="'+ci+'" data-ii="'+ii+'" value="'+esc(it.unit)+'" placeholder="单位"></td>';
+      if(settings.showFulfill!==false){
+        html+='<td><input class="cell num" data-field="given" data-ci="'+ci+'" data-ii="'+ii+'" value="'+esc(it.given)+'" inputmode="decimal" placeholder="实给"></td>'
+          +'<td class="chk"><input type="checkbox" data-field="done" data-ci="'+ci+'" data-ii="'+ii+'"'+(it.done?' checked':'')+'></td>'
+          +'<td class="chk"><input type="checkbox" data-field="totalDone" data-ci="'+ci+'" data-ii="'+ii+'"'+(it.totalDone?' checked':'')+'></td>';
+      }
+      html+='<td class="op"><button type="button" class="btn tiny danger" data-act="i-del" data-ci="'+ci+'" data-ii="'+ii+'" title="删除">×</button></td></tr>';
+    });
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+}
+function renderUnmatched(){
+  var uw=document.getElementById('unmatchedWrap');
+  if(!state.unmatched||!state.unmatched.length){uw.innerHTML='';return;}
+  uw.innerHTML='<div class="unmatched-wrap"><h3>未匹配项目（没对上模板的商品，打印时会一起带上）</h3>'
+    +'<table class="unmatched-table"><colgroup><col style="width:52%"><col style="width:16%"><col style="width:16%"><col style="width:16%"></colgroup>'
+    +'<thead><tr><th>商品</th><th>数量</th><th>单位</th><th></th></tr></thead><tbody>'
+    +state.unmatched.map(function(u,i){
+      return '<tr><td><input class="cell" data-um="name" data-i="'+i+'" value="'+esc(u.name)+'"></td>'
+        +'<td><input class="cell num" data-um="qty" data-i="'+i+'" value="'+esc(u.qty)+'"></td>'
+        +'<td><input class="cell" data-um="unit" data-i="'+i+'" value="'+esc(u.unit)+'"></td>'
+        +'<td class="op"><button type="button" class="btn tiny danger" data-act="um-del" data-i="'+i+'">×</button></td></tr>';
+    }).join('')+'</tbody></table></div>';
+}
+function render(){
+  renderMain();
+  renderUnmatched();
+  updateMeta();
+  if(pendingFocus){
+    if(pendingFocus==='item'){var els=document.querySelectorAll('#tableWrap input[data-field="name"]');if(els.length)els[els.length-1].focus();}
+    else if(pendingFocus==='customer'){var els2=document.querySelectorAll('#tableWrap input[data-field="cname"]');if(els2.length)els2[els2.length-1].focus();}
+    pendingFocus=null;
+  }
+}
+function renderEditor(){
+  var ed=document.getElementById('tplEditor');
+  if(!state.customers.length){ed.innerHTML='<div class="empty">还没有客户</div>';return;}
+  ed.innerHTML=state.customers.map(function(c,ci){
+    var h='<div class="tpl-box"><div class="tpl-box-head">'
+      +'<span class="c-idx">'+(ci+1)+'</span>'
+      +'<input class="c-name" data-tpl="cname" data-ci="'+ci+'" value="'+esc(c.name)+'" placeholder="客户名">'
+      +'<button type="button" class="btn tiny danger" data-tpl-act="c-del" data-ci="'+ci+'">删客户</button>'
+      +'</div>'
+      +'<input class="tpl-note" data-tpl="cnote" data-ci="'+ci+'" value="'+esc(c.note)+'" placeholder="备注（打印时显示，如：猪肉碎（好的））">';
+    c.items.forEach(function(it,ii){
+      h+='<div class="tpl-item">'
+        +'<input data-tpl="iname" data-ci="'+ci+'" data-ii="'+ii+'" value="'+esc(it.name)+'" placeholder="商品名">'
+        +'<input class="unit-in" data-tpl="iunit" data-ci="'+ci+'" data-ii="'+ii+'" value="'+esc(it.unit)+'" placeholder="单位">'
+        +'<button type="button" class="btn tiny danger del-in" data-tpl-act="i-del" data-ci="'+ci+'" data-ii="'+ii+'">×</button>'
+        +'</div>';
+    });
+    h+='<button type="button" class="btn tiny ghost" data-tpl-act="i-add" data-ci="'+ci+'">＋ 商品</button></div>';
+    return h;
+  }).join('');
+}
+function renderHistory(){
+  var list=document.getElementById('historyList');
+  var h=loadHistory();
+  var dates=Object.keys(h).sort().reverse();
+  if(!dates.length){
+    list.innerHTML='<div class="empty">还没有保存记录。填好表格后点右上角「保存」。</div>';
+    return;
+  }
+  list.innerHTML='';
+  dates.forEach(function(d){
+    var entry=h[d];
+    var div=document.createElement('div');
+    div.className='hist-item';
+    div.innerHTML='<span class="hist-date">'+esc(d)+'</span>'
+      +'<span class="hist-meta">'+entry.customers.length+' 户 · 已填 '+countFilled(entry.customers)+' 项'+(entry.unmatched&&entry.unmatched.length?' · 未匹配 '+entry.unmatched.length+' 项':'')+'</span>'
+      +'<span class="hist-actions">'
+      +'<button type="button" class="btn tiny" data-hist="load" data-date="'+esc(d)+'">载入</button>'
+      +'<button type="button" class="btn tiny danger" data-hist="del" data-date="'+esc(d)+'">删除</button>'
+      +'</span>';
+    list.appendChild(div);
+  });
+}
+function doPrint(){
+  document.getElementById('printArea').innerHTML=buildPrintHTML(state,settings);
+  setTimeout(function(){window.print();},60);
+}
+function saveNow(){
+  if(!countFilled(state.customers)&&(!state.unmatched||!state.unmatched.length)){toast('表格还是空的，没什么可保存');return;}
+  saveHistoryEntry();
+  renderHistory();
+  toast('已保存 '+state.date);
+}
+/* ===== APP LOGIC B ===== */
+/* 表格内输入 */
+document.addEventListener('input',function(e){
+  var t=e.target;
+  if(t.dataset.tpl){
+    var ci=+t.dataset.ci,ii=t.dataset.ii;
+    var c=state.customers[ci];if(!c)return;
+    if(t.dataset.tpl==='cname')c.name=t.value;
+    else if(t.dataset.tpl==='cnote')c.note=t.value;
+    else if(t.dataset.tpl==='iname'){var it=c.items[ii];if(it)it.name=t.value;}
+    else if(t.dataset.tpl==='iunit'){var it2=c.items[ii];if(it2)it2.unit=t.value;}
+    render();
+    return;
+  }
+  if(t.dataset.um){
+    var u=state.unmatched[+t.dataset.i];
+    if(!u)return;
+    u[t.dataset.um]=t.value;
+    saveDraft();
+    return;
+  }
+  var field=t.dataset&&t.dataset.field;
+  if(!field)return;
+  var ci=+t.dataset.ci;
+  if(field==='cname'){if(state.customers[ci])state.customers[ci].name=t.value;updateMeta();return;}
+  if(field==='cnote'){if(state.customers[ci])state.customers[ci].note=t.value;updateMeta();return;}
+  var ii=+t.dataset.ii,it=state.customers[ci]&&state.customers[ci].items[ii];
+  if(!it)return;
+  it[field]=t.value;
+  updateMeta();
+});
+/* 勾选 完成/总完成 */
+document.addEventListener('change',function(e){
+  var t=e.target;
+  if(t.type==='checkbox'&&t.dataset.field){
+    var ci=+t.dataset.ci,ii=+t.dataset.ii,it=state.customers[ci]&&state.customers[ci].items[ii];
+    if(!it)return;
+    it[t.dataset.field]=t.checked;
+    updateMeta();
+  }
+});
+/* 结构操作按钮 */
+document.addEventListener('click',function(e){
+  var histBtn=e.target.closest('button[data-hist]');
+  if(histBtn){
+    var d=histBtn.dataset.date,h=loadHistory(),entry=h[d];
+    if(!entry)return;
+    if(histBtn.dataset.hist==='del'){
+      if(confirm('删除 '+d+' 的历史记录？')){
+        delete h[d];
+        try{localStorage.setItem(KEY_HIST,JSON.stringify(h));}catch(err){}
+        renderHistory();toast('已删除');
+      }
+    }else if(histBtn.dataset.hist==='load'){
+      if(countFilled(state.customers)&&!confirm('载入会覆盖当前表格，继续？'))return;
+      state.date=d;state.customers=deepCopy(entry.customers);state.unmatched=deepCopy(entry.unmatched||[]);
+      document.getElementById('dateInput').value=d;
+      render();renderEditor();toast('已载入 '+d);
+    }
+    return;
+  }
+  var tplBtn=e.target.closest('button[data-tpl-act]');
+  if(tplBtn){
+    var act=tplBtn.dataset.tplAct,ci=+tplBtn.dataset.ci,ii=+tplBtn.dataset.ii;
+    if(act==='c-del'){
+      if(confirm('从模板删除「'+(state.customers[ci].name||'未命名')+'」？')){state.customers.splice(ci,1);render();renderEditor();}
+    }else if(act==='i-del'){
+      if(confirm('从模板删除该商品？')){state.customers[ci].items.splice(ii,1);render();renderEditor();}
+    }else if(act==='i-add'){
+      state.customers[ci].items.push({name:'',unit:'',qty:'',given:'',done:false,totalDone:false});
+      render();renderEditor();
+    }
+    return;
+  }
+  var btn=e.target.closest('button[data-act]');
+  if(!btn)return;
+  var act=btn.dataset.act,ci=+btn.dataset.ci,ii=btn.dataset.ii;
+  if(act==='c-up'){
+    if(ci>0){var t=state.customers[ci];state.customers[ci]=state.customers[ci-1];state.customers[ci-1]=t;render();renderEditor();}
+  }else if(act==='c-down'){
+    if(ci<state.customers.length-1){var t=state.customers[ci];state.customers[ci]=state.customers[ci+1];state.customers[ci+1]=t;render();renderEditor();}
+  }else if(act==='c-del'){
+    if(confirm('删除「'+(state.customers[ci].name||'未命名')+'」这个客户？')){state.customers.splice(ci,1);render();renderEditor();}
+  }else if(act==='i-del'){
+    if(confirm('删除该商品？')){state.customers[ci].items.splice(ii,1);render();renderEditor();}
+  }else if(act==='i-add'){
+    state.customers[ci].items.push({name:'',unit:'',qty:'',given:'',done:false,totalDone:false});
+    pendingFocus='item';render();renderEditor();
+  }else if(act==='add-customer'){
+    state.customers.push({name:'',note:'',items:[]});
+    pendingFocus='customer';render();renderEditor();
+  }else if(act==='clear-qty'){
+    if(confirm('清空所有数量、实给量和勾选（保留客户模板结构）？')){
+      state.customers.forEach(function(c){c.items.forEach(function(it){it.qty='';it.given='';it.done=false;it.totalDone=false;});});
+      state.unmatched=[];
+      render();toast('已清空');
+    }
+  }else if(act==='um-del'){
+    state.unmatched.splice(ii,1);
+    render();
+  }
+});
+
+document.getElementById('btnParse').addEventListener('click',function(){
+  var text=document.getElementById('rawInput').value;
+  if(!text.trim()){toast('请先粘贴订单文本');return;}
+  if(countFilled(state.customers)&&!confirm('识别会重新生成表格（覆盖已填内容），继续？'))return;
+  var res=parseOrdersSimple(text);
+  state.customers=res.customers;
+  state.unmatched=[];
+  render();renderEditor();
+  toast('识别完成：'+state.customers.length+' 个客户，共 '+countFilled(state.customers)+' 项商品');
+});
+
+document.getElementById('btnSample').addEventListener('click',function(){
+  document.getElementById('rawInput').value='*12kg pork belly\n*6kg chicken bones\n*6kg beef slices for soups.\n2包 金钱鍵。\n1包 牛仔骨\n1包 牛肋条\n\n牛腩-40kg\n猪肉丝-10kg（5mm)\n带皮猪肩肉片-20kg\n\n带骨头五花肉6片，梅头肉35kg\n\n10片 五花肉\n20kg 梅头\n\n10kg 豬肉碎（好的）\n20kg 后腿肉 （去油）尽量干净\n\n走地鸡：1箱\n美排：1箱';
+  toast('已填入老板话术示例（空行=分客户），点「识别并生成表格」试试');
+});
+
+document.getElementById('btnSave').addEventListener('click',saveNow);
+document.getElementById('btnPrint').addEventListener('click',doPrint);
+
+document.getElementById('btnCopy').addEventListener('click',function(){
+  var csv=buildCSV(state,settings);
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(csv).then(function(){toast('已复制，可直接粘贴到微信或 Excel');},function(){toast('复制失败，请用「导出 CSV」');});
+  }else{
+    var ta=document.createElement('textarea');
+    ta.value=csv;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');toast('已复制');}catch(err){toast('复制失败，请用「导出 CSV」');}
+    ta.remove();
+  }
+});
+
+document.getElementById('btnExport').addEventListener('click',function(){
+  var csv=buildCSV(state,settings);
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='订单_'+state.date+'.csv';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
+  toast('已导出 CSV，可用 Excel 打开');
+});
+
+document.getElementById('btnAddTplCustomer').addEventListener('click',function(){
+  var cn=['一','二','三','四','五','六','七','八','九','十'];
+  var nm='客户'+(state.customers.length+1);
+  state.customers.push({name:cn[state.customers.length]?'客户'+cn[state.customers.length]:nm,note:'',items:[]});
+  render();renderEditor();
+});
+
+var shopEl=document.getElementById('setShop');
+shopEl.addEventListener('input',function(){settings.shopName=this.value;saveSettings();});
+var fulfillEl=document.getElementById('setFulfill');
+fulfillEl.addEventListener('change',function(){settings.showFulfill=this.checked;saveSettings();render();});
+
+var dateInput=document.getElementById('dateInput');
+dateInput.addEventListener('change',function(){state.date=this.value||todayStr();saveDraft();});
+
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();saveNow();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){e.preventDefault();doPrint();}
+});
+
+/* init */
+loadSettings();loadDraft();
+document.getElementById('dateInput').value=state.date;
+document.getElementById('setShop').value=settings.shopName;
+document.getElementById('setFulfill').checked=settings.showFulfill!==false;
+render();renderHistory();renderEditor();
+</script>
+<script>
+/* 注册 Service Worker（http/https 环境生效，离线可用 + 可安装） */
+if('serviceWorker' in navigator && location.protocol !== 'file:'){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
