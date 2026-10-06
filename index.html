@@ -114,15 +114,12 @@ tr.c-head td{background:#eef4ef;padding:4px 6px}
   body{background:#fff}
   .topbar,main,.foot,.toast{display:none!important}
   #printArea{display:block!important;font-family:"Microsoft YaHei","微软雅黑","PingFang SC","Heiti SC",sans-serif;color:#000;font-size:11pt}
-  .print-brand{display:flex;align-items:center;justify-content:center;gap:10pt;padding:1pt 0 3pt}
-  .print-brand img{height:30pt;width:auto}
-  .print-brand span{font-size:11pt;font-weight:700;letter-spacing:1pt}
-  .print-title{text-align:center;font-weight:700;font-size:11pt;padding:2pt 0 3pt}
+  .print-title{text-align:center;font-weight:700;font-size:11pt;padding:6pt 0 4pt}
   .print-date{display:flex;border:1px solid #000;margin:0 0 8pt}
   .print-date span{border-right:1px solid #000;padding:4pt 6pt;text-align:center;width:6.5%;font-size:11pt;font-weight:700}
   .print-date b{flex:1;padding:4pt 6pt;text-align:center;font-weight:400;font-size:11pt}
   #printArea table{width:100%;border-collapse:collapse;table-layout:fixed}
-  #printArea th,#printArea td{border:1px solid #000;padding:1pt 2pt;font-size:11pt;text-align:center;vertical-align:middle;white-space:nowrap;height:15.75pt;line-height:1.05}
+  #printArea th,#printArea td{border:1px solid #000;padding:1pt 2pt;font-size:10.5pt;text-align:center;vertical-align:middle;white-space:nowrap;overflow:hidden;height:15.75pt;line-height:1.05}
   #printArea th{background:#f0f0f0;font-weight:700}
   tr{break-inside:avoid;height:15.75pt}
   .pc-cname{font-weight:700}
@@ -337,7 +334,6 @@ function buildPrintHTML(state,settings){
   var heads=showF?['客户','产品','重量/数量','单位','实给量','完成','总完成']:['客户','产品','重量/数量','单位'];
   var widths=showF?['6.38%','58.51%','8.51%','4.26%','9.57%','6.38%','6.38%']:['8.22%','75.34%','10.96%','5.48%'];
   var html='';
-  html+='<div class="print-brand"><img src="assets/logo.png" alt="BX STUDIO" class="print-logo"><span>BX STUDIO</span></div>';
   html+='<div class="print-title">'+esc(settings.shopName||'订单表')+'</div>';
   html+='<div class="print-date"><span>日期</span><b>'+esc(state.date)+'</b></div>';
   html+='<table><colgroup>';
